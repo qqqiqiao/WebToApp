@@ -39,7 +39,7 @@
     'nav.qqClose': 'Close',
     'nav.communityTitle': 'Community',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': 'This chat belongs to another project with the same name. You can still bring this site there.',
+    'nav.tgNote': 'This group belongs to another project with the same name. You can chat about this site there too.',
     'nav.tgJoin': 'Open Telegram',
     'nav.qqSection': 'QQ group',
 
@@ -307,7 +307,7 @@
     'nav.qqClose': '关闭',
     'nav.communityTitle': '社区',
     'nav.tgTitle': 'Telegram 社区',
-    'nav.tgNote': '这是另一个同名项目的群。名字撞了，这边的事也可以在那里一起处理。',
+    'nav.tgNote': '这是另一个同名项目的群，这边的事也可以在那里一起聊。',
     'nav.tgJoin': '打开 Telegram',
     'nav.qqSection': 'QQ 群',
 
@@ -575,7 +575,7 @@
     'nav.qqClose': '閉じる',
     'nav.communityTitle': 'コミュニティ',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': '同名の別プロジェクトのグループです。こちらの話もそこで一緒に扱えます。',
+    'nav.tgNote': '同名の別プロジェクトのグループです。こちらの話もそこで一緒に話せます。',
     'nav.tgJoin': 'Telegram を開く',
     'nav.qqSection': 'QQグループ',
 
@@ -819,7 +819,7 @@
     'nav.qqClose': 'إغلاق',
     'nav.communityTitle': 'المجتمع',
     'nav.tgTitle': 'تيليغرام',
-    'nav.tgNote': 'هذه الدردشة لمشروع آخر يحمل الاسم نفسه. يمكن مناقشة هذا الموقع هناك أيضًا.',
+    'nav.tgNote': 'هذه مجموعة مشروع آخر بالاسم نفسه. يمكن الحديث عن هذا الموقع هناك أيضًا.',
     'nav.tgJoin': 'فتح تيليغرام',
     'nav.qqSection': 'مجموعة QQ',
 
@@ -1063,7 +1063,7 @@
     'nav.qqClose': 'Закрыть',
     'nav.communityTitle': 'Сообщество',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': 'Этот чат другого проекта с тем же названием. Вопросы про этот сайт тоже можно писать туда.',
+    'nav.tgNote': 'Это группа другого проекта с тем же названием. Про этот сайт тоже можно поговорить там.',
     'nav.tgJoin': 'Открыть Telegram',
     'nav.qqSection': 'Группа QQ',
 
@@ -1307,7 +1307,7 @@
     'nav.qqClose': 'Cerrar',
     'nav.communityTitle': 'Comunidad',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': 'Este chat es de otro proyecto que usa el mismo nombre. También puedes hablar de este sitio allí.',
+    'nav.tgNote': 'Es el grupo de otro proyecto con el mismo nombre. También puedes hablar de este sitio allí.',
     'nav.tgJoin': 'Abrir Telegram',
     'nav.qqSection': 'Grupo QQ',
 
@@ -1551,7 +1551,7 @@
     'nav.qqClose': 'Fechar',
     'nav.communityTitle': 'Comunidade',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': 'Este chat é de outro projeto com o mesmo nome. Dá para tratar deste site lá também.',
+    'nav.tgNote': 'É o grupo de outro projeto com o mesmo nome. Dá para conversar sobre este site lá também.',
     'nav.tgJoin': 'Abrir o Telegram',
     'nav.qqSection': 'Grupo QQ',
 
@@ -1795,7 +1795,7 @@
     'nav.qqClose': 'Fermer',
     'nav.communityTitle': 'Communauté',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': 'Ce salon appartient à un autre projet qui porte le même nom. On peut quand même y parler de ce site.',
+    'nav.tgNote': 'C’est le groupe d’un autre projet qui porte le même nom. On peut aussi en parler là-bas.',
     'nav.tgJoin': 'Ouvrir Telegram',
     'nav.qqSection': 'Groupe QQ',
 
@@ -2039,7 +2039,7 @@
     'nav.qqClose': 'Schließen',
     'nav.communityTitle': 'Community',
     'nav.tgTitle': 'Telegram',
-    'nav.tgNote': 'Dieser Chat gehört zu einem anderen Projekt mit demselben Namen. Fragen zu dieser Seite kann man dort trotzdem stellen.',
+    'nav.tgNote': 'Das ist die Gruppe eines anderen Projekts mit demselben Namen. Über diese Seite kann man dort auch mitreden.',
     'nav.tgJoin': 'Telegram öffnen',
     'nav.qqSection': 'QQ-Gruppe',
 
