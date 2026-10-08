@@ -17,6 +17,7 @@
 3. [Python 环境](#3-python-环境)
 4. [配置](#4-配置)
 5. [本地运行](#5-本地运行)
+   - [Docker](#docker)
 6. [作为服务运行（systemd）](#6-作为服务运行systemd)
 7. [反向代理（Nginx）](#7-反向代理nginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 打开 <http://127.0.0.1:8000>。本地开发不需要任何环境变量。
+
+## Docker
+
+使用 Docker Compose v2，一条命令完成构建并在 8000 端口启动。默认镜像带有 Python、JDK、Android SDK 和 apktool，安卓产物是真正的 APK。重建镜像不会清掉已经生成的应用和签名密钥。
+
+```bash
+cp .env.example .env
+# 对外提供服务前，把 PUBLIC_BASE_URL 设成 https://你的域名
+docker compose up -d --build
+```
+
+打开 <http://127.0.0.1:8000>。第一次构建会从 `dl.google.com` 下载 Android SDK，并从 GitHub 下载 apktool，机器需要能访问这两个地址，内存建议 2 GB。之后再次启动会直接用已经建好的镜像。
+
+这些数据会留下来：
+
+- 卷 `webtoapp-generated` — 应用、历史和社区数据库
+- `./certs` — 每个应用自己的安卓密钥，以及可选的 iOS 证书（`ios-cert.pem`、`ios-key.pem`、`ios-chain.pem`）
+
+前面用 Nginx、Caddy 或面板反代到 8000 端口。容器默认信任内网地址发来的 `X-Forwarded-*`。如果反代不在内网地址上，在 `.env` 里设置 `DOCKER_TRUSTED_PROXY_CIDRS`。
+
+不需要真实 APK 时，可以做小一点的镜像（安卓会退回 PWA 压缩包）：
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+更新：
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. 作为服务运行（systemd）
 
@@ -283,6 +316,7 @@ sudo systemctl restart webtoapp
 | 下载仍从源站发出 | 某个 `R2_*` 变量缺失，或设置后未重启。旧应用需跑回填（§11）。 |
 | iOS 描述文件显示"未验证" | 描述文件未签名。提供公开 CA 证书（§10）。 |
 | `502 Bad Gateway` | 服务未运行或端口不对——`systemctl status webtoapp`。 |
+| Docker 构建在下载 SDK 时失败 | 机器访问不了 `dl.google.com` 或 GitHub。改用 `WITH_ANDROID=0 docker compose up -d --build`，或等网络可用后再构建完整镜像。 |
 | 构建接口返回 `429` | 触发每设备每日配额或每 IP 限流。调整 `DAILY_BUILD_QUOTA`。 |
 
 ---

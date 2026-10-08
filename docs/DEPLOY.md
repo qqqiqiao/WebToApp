@@ -17,6 +17,7 @@ A step-by-step guide to running WebToApp in production.
 3. [Python environment](#3-python-environment)
 4. [Configuration](#4-configuration)
 5. [Run locally](#5-run-locally)
+   - [Docker](#docker)
 6. [Run as a service (systemd)](#6-run-as-a-service-systemd)
 7. [Reverse proxy (Nginx)](#7-reverse-proxy-nginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 Open <http://127.0.0.1:8000>. For local development you don't need any environment variables.
+
+## Docker
+
+One command on Docker Compose v2 builds the image and starts the site on port 8000. The default image includes Python, a JDK, the Android SDK and apktool, so Android packages are real APKs. Generated apps and signing keys survive image rebuilds.
+
+```bash
+cp .env.example .env
+# Set PUBLIC_BASE_URL=https://your-domain.com before exposing this publicly.
+docker compose up -d --build
+```
+
+Open <http://127.0.0.1:8000>. The first build downloads the Android SDK from `dl.google.com` and apktool from GitHub, so the machine needs outbound access and about 2 GB of RAM. Later starts reuse the image.
+
+What is kept:
+
+- volume `webtoapp-generated` — apps, history and the community database
+- `./certs` — per-app Android keystores, plus optional iOS PEM files (`ios-cert.pem`, `ios-key.pem`, `ios-chain.pem`)
+
+Put Nginx, Caddy or your panel in front of port 8000. The container trusts reverse proxies on private addresses for `X-Forwarded-*`. If the proxy uses some other address, set `DOCKER_TRUSTED_PROXY_CIDRS` in `.env`.
+
+A smaller image, without the Android toolchain (Android downloads become a PWA zip):
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+Update:
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. Run as a service (systemd)
 
@@ -328,6 +361,7 @@ If you changed frontend assets (`css/`, `js/`), bump the `?v=` query string in `
 | Downloads still served from origin | An `R2_*` variable is missing, or you didn't restart after setting them. Run the backfill for old apps (§11). |
 | iOS profile shows "Unverified" | Profile is unsigned. Provide a public-CA cert (§10). |
 | `502 Bad Gateway` | The service isn't running or the port is wrong — `systemctl status webtoapp`. |
+| Docker build fails while downloading the SDK | The host cannot reach `dl.google.com` or GitHub. Use `WITH_ANDROID=0 docker compose up -d --build`, or retry when outbound access works. |
 | Build endpoint returns `429` | Per-device daily quota or per-IP rate limit hit. Tune `DAILY_BUILD_QUOTA`. |
 
 ---

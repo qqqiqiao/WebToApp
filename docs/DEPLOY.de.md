@@ -17,6 +17,7 @@ Schritt-für-Schritt-Anleitung für den Produktivbetrieb von WebToApp.
 3. [Python-Umgebung](#3-python-umgebung)
 4. [Konfiguration](#4-konfiguration)
 5. [Lokal ausführen](#5-lokal-ausführen)
+   - [Docker](#docker)
 6. [Als Dienst ausführen (systemd)](#6-als-dienst-ausführen-systemd)
 7. [Reverse Proxy (Nginx)](#7-reverse-proxy-nginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 Öffne <http://127.0.0.1:8000>. Für die lokale Entwicklung sind keine Umgebungsvariablen nötig.
+
+## Docker
+
+Ein Befehl baut das Image und startet die Seite auf Port 8000. Das Standard-Image enthält Python, ein JDK, das Android SDK und apktool, daher sind Android-Pakete echte APKs. Apps und Signierschlüssel bleiben beim Neubau erhalten.
+
+```bash
+cp .env.example .env
+# Vor der Veröffentlichung PUBLIC_BASE_URL=https://your-domain.com setzen.
+docker compose up -d --build
+```
+
+Öffne <http://127.0.0.1:8000>. Der erste Build lädt das Android SDK von `dl.google.com` und apktool von GitHub. Dafür braucht der Rechner ausgehendes Netz und etwa 2 GB RAM.
+
+Das bleibt erhalten:
+
+- Volume `webtoapp-generated` — Apps, Verlauf und die Community-Datenbank
+- `./certs` — Android-Keystores je App und optionale iOS-PEMs (`ios-cert.pem`, `ios-key.pem`, `ios-chain.pem`)
+
+Einen Reverse-Proxy auf Port 8000 legen. Proxys in privaten Netzen dürfen `X-Forwarded-*` setzen. Sonst `DOCKER_TRUSTED_PROXY_CIDRS` in `.env` setzen.
+
+Kleineres Image ohne Android-Werkzeuge (Android wird ein PWA-Zip):
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+Aktualisieren:
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. Als Dienst ausführen (systemd)
 

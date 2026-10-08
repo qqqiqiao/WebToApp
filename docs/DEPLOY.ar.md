@@ -19,6 +19,7 @@
 3. [بيئة Python](#3-بيئة-python)
 4. [الإعداد](#4-الإعداد)
 5. [التشغيل محليًا](#5-التشغيل-محليًا)
+   - [Docker](#docker)
 6. [التشغيل كخدمة (systemd)](#6-التشغيل-كخدمة-systemd)
 7. [الوكيل العكسي (Nginx)](#7-الوكيل-العكسي-nginx)
 8. [HTTPS](#8-https)
@@ -99,6 +100,50 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 <div dir="rtl">
 
 افتح <http://127.0.0.1:8000>. للتطوير المحلي لا تحتاج أي متغيّرات بيئة.
+
+## Docker
+
+أمر واحد يبني الصورة ويشغّل الموقع على المنفذ 8000. الصورة الافتراضية تتضمن Python وJDK وAndroid SDK وapktool، لذا حزم أندرويد هي APK حقيقية. التطبيقات المُنشأة ومفاتيح التوقيع تبقى بعد إعادة البناء.
+
+</div>
+
+```bash
+cp .env.example .env
+# قبل النشر اضبط PUBLIC_BASE_URL=https://your-domain.com.
+docker compose up -d --build
+```
+
+<div dir="rtl">
+
+افتح <http://127.0.0.1:8000>. البناء الأول ينزّل Android SDK من `dl.google.com` وapktool من GitHub. يلزم اتصال خارجي ونحو 2 غيغابايت من الذاكرة.
+
+ما يُحفَظ:
+
+- المجلد `webtoapp-generated` — التطبيقات والسجل وقاعدة المجتمع
+- `./certs` — مفاتيح أندرويد لكل تطبيق وملفات PEM اختيارية لـ iOS (`ios-cert.pem` و`ios-key.pem` و`ios-chain.pem`)
+
+ضع وكيلاً عكسياً أمام المنفذ 8000. الوكلاء على عناوين خاصة يُوثَقون لترويسات `X-Forwarded-*`. وإلا فاضبط `DOCKER_TRUSTED_PROXY_CIDRS` في `.env`.
+
+صورة أصغر بلا سلسلة أندرويد (يصبح أندرويد ملف PWA مضغوطاً):
+
+</div>
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+<div dir="rtl">
+
+التحديث:
+
+</div>
+
+```bash
+git pull
+docker compose up -d --build
+```
+
+<div dir="rtl">
 
 ## 6. التشغيل كخدمة (systemd)
 

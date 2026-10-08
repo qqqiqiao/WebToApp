@@ -165,6 +165,14 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 > 本地开发不需要任何环境变量。公网部署时请设置 `PUBLIC_BASE_URL`，
 > 否则 iPhone 无法打开 `localhost`。完整列表见 [`.env.example`](../.env.example)。
 
+### Docker
+
+```bash
+docker compose up -d --build
+```
+
+镜像里带好了安卓构建工具。说明见 [DEPLOY.zh.md](DEPLOY.zh.md#docker)。
+
 ## 部署
 
 > 完整的生产部署教程（systemd、Nginx、HTTPS、Android/iOS、R2）见 **[DEPLOY.md](DEPLOY.md)**。

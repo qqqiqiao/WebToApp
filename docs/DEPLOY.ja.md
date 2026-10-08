@@ -17,6 +17,7 @@ WebToApp を本番環境で動かすためのステップバイステップガ�
 3. [Python 環境](#3-python-環境)
 4. [設定](#4-設定)
 5. [ローカル実行](#5-ローカル実行)
+   - [Docker](#docker)
 6. [サービスとして実行（systemd）](#6-サービスとして実行systemd)
 7. [リバースプロキシ（Nginx）](#7-リバースプロキシnginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 <http://127.0.0.1:8000> を開きます。ローカル開発では環境変数は不要です。
+
+## Docker
+
+一つのコマンドでイメージを作り、ポート 8000 で起動します。既定のイメージには Python、JDK、Android SDK、apktool が入っているので、Android の成果物は本物の APK です。イメージを作り直しても、生成済みのアプリと署名鍵は残ります。
+
+```bash
+cp .env.example .env
+# 公開する前に PUBLIC_BASE_URL=https://your-domain.com を設定してください。
+docker compose up -d --build
+```
+
+<http://127.0.0.1:8000> を開きます。初回ビルドは `dl.google.com` と GitHub から SDK を取得します。外向き通信と、およそ 2 GB のメモリが必要です。
+
+残るもの:
+
+- ボリューム `webtoapp-generated` — アプリ、履歴、コミュニティのデータベース
+- `./certs` — アプリごとの Android 鍵と、任意の iOS PEM（`ios-cert.pem`、`ios-key.pem`、`ios-chain.pem`）
+
+リバースプロキシを 8000 番へ向けます。プライベートアドレスのプロキシは `X-Forwarded-*` を信頼します。それ以外のアドレスなら `.env` に `DOCKER_TRUSTED_PROXY_CIDRS` を設定してください。
+
+Android ツールチェーンなしの小さいイメージ（Android は PWA zip になります）:
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+更新:
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. サービスとして実行（systemd）
 

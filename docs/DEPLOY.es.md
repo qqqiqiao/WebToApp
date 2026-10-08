@@ -17,6 +17,7 @@ Guía paso a paso para ejecutar WebToApp en producción.
 3. [Entorno Python](#3-entorno-python)
 4. [Configuración](#4-configuración)
 5. [Ejecutar localmente](#5-ejecutar-localmente)
+   - [Docker](#docker)
 6. [Ejecutar como servicio (systemd)](#6-ejecutar-como-servicio-systemd)
 7. [Proxy inverso (Nginx)](#7-proxy-inverso-nginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 Abre <http://127.0.0.1:8000>. Para desarrollo local no necesitas variables de entorno.
+
+## Docker
+
+Un comando construye la imagen y arranca el sitio en el puerto 8000. La imagen por defecto incluye Python, un JDK, el SDK de Android y apktool, así que los paquetes de Android son APK reales. Las apps generadas y las claves de firma sobreviven a una reconstrucción.
+
+```bash
+cp .env.example .env
+# Antes de publicarlo, define PUBLIC_BASE_URL=https://your-domain.com.
+docker compose up -d --build
+```
+
+Abre <http://127.0.0.1:8000>. La primera construcción descarga el SDK de Android desde `dl.google.com` y apktool desde GitHub. Hace falta salida a internet y unos 2 GB de RAM.
+
+Qué se conserva:
+
+- el volumen `webtoapp-generated` — apps, historial y la base de la comunidad
+- `./certs` — keystores de Android por app y PEM de iOS opcionales (`ios-cert.pem`, `ios-key.pem`, `ios-chain.pem`)
+
+Pon un proxy inverso delante del puerto 8000. Los proxies en direcciones privadas pueden enviar `X-Forwarded-*`. Si no, define `DOCKER_TRUSTED_PROXY_CIDRS` en `.env`.
+
+Imagen más pequeña, sin la cadena de Android (Android pasa a ser un zip PWA):
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+Actualizar:
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. Ejecutar como servicio (systemd)
 
