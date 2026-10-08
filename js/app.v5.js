@@ -895,6 +895,117 @@
     }
   }
 
+  function copyPlainText(text) {
+    const legacy = () => new Promise((resolve, reject) => {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.insetInlineStart = '-9999px';
+      document.body.appendChild(area);
+      area.select();
+      try {
+        const ok = document.execCommand('copy');
+        area.remove();
+        if (ok) resolve();
+        else reject(new Error('copy failed'));
+      } catch (err) {
+        area.remove();
+        reject(err);
+      }
+    });
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).catch(() => legacy());
+    }
+    return legacy();
+  }
+
+  function initQqGroup() {
+    const btn = document.getElementById('qq-group-btn');
+    const panel = document.getElementById('qq-group-panel');
+    const closeBtn = document.getElementById('qq-group-close');
+    const copyBtn = document.getElementById('qq-group-copy');
+    const numberEl = document.getElementById('qq-group-number');
+    const statusEl = document.getElementById('qq-group-status');
+    if (!btn || !panel || !closeBtn || !copyBtn || !numberEl || !statusEl) return;
+
+    let statusTimer = 0;
+    const isOpen = () => !panel.classList.contains('hidden');
+
+    function clearStatus() {
+      window.clearTimeout(statusTimer);
+      statusTimer = 0;
+      statusEl.textContent = '';
+      statusEl.classList.remove('is-failed');
+    }
+
+    function showStatus(message, failed) {
+      window.clearTimeout(statusTimer);
+      statusEl.textContent = message;
+      statusEl.classList.toggle('is-failed', !!failed);
+      statusTimer = window.setTimeout(clearStatus, 2000);
+    }
+
+    function openPanel() {
+      panel.classList.remove('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      const join = panel.querySelector('.qq-group-join');
+      if (join) join.focus();
+    }
+
+    function closePanel(restoreFocus) {
+      if (!isOpen()) return;
+      panel.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+      clearStatus();
+      if (restoreFocus) btn.focus();
+    }
+
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (isOpen()) closePanel(false);
+      else openPanel();
+    });
+
+    closeBtn.addEventListener('click', () => closePanel(true));
+
+    document.addEventListener('click', (event) => {
+      if (!isOpen()) return;
+      if (panel.contains(event.target) || btn.contains(event.target)) return;
+      closePanel(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && isOpen()) {
+        event.preventDefault();
+        closePanel(true);
+      }
+    });
+
+    panel.addEventListener('focusout', (event) => {
+      if (!isOpen()) return;
+      const next = event.relatedTarget;
+      if (!next || panel.contains(next) || next === btn) return;
+      closePanel(false);
+    });
+
+    copyBtn.addEventListener('click', () => {
+      const number = (numberEl.textContent || '').trim();
+      copyPlainText(number).then(() => {
+        showStatus(t('nav.qqCopied'), false);
+      }).catch(() => {
+        showStatus(t('nav.qqCopyFailed'), true);
+      });
+    });
+
+    window.addEventListener('i18n:changed', () => {
+      if (!statusEl.textContent) return;
+      statusEl.textContent = statusEl.classList.contains('is-failed')
+        ? t('nav.qqCopyFailed')
+        : t('nav.qqCopied');
+    });
+  }
+
   function initProfile() {
     // Paint the cached avatar instantly, then refresh in the background —
     // otherwise the nav button shows the generic icon on every page load
@@ -907,6 +1018,7 @@
         paintNavAvatar(d.profile);
       }
     }).catch(() => {});
+    initQqGroup();
     profileBtn.addEventListener('click', () => openProfile(null));
     profileClose.addEventListener('click', () => closeProfileModal());
     profileModal.addEventListener('click', (e) => {

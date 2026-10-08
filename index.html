@@ -14,9 +14,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Spectral:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260914-tagfix1">
-  <script src="js/i18n.js?v=20260914-tagfix1"></script>
-  <script src="js/i18n.strings.js?v=20260914-tagfix1"></script>
+  <link rel="stylesheet" href="css/style.css?v=20261008-qq2">
+  <script src="js/i18n.js?v=20261008-qq2"></script>
+  <script src="js/i18n.strings.js?v=20261008-qq2"></script>
 </head>
 <body>
   <header id="nav">
@@ -39,6 +39,27 @@
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
         </svg>
       </a>
+      <div class="qq-group">
+        <button id="qq-group-btn" class="qq-group-btn" type="button"
+          aria-haspopup="dialog" aria-expanded="false" aria-controls="qq-group-panel"
+          data-i18n-aria-label="nav.qq" data-i18n-title="nav.qq" aria-label="QQ group" title="QQ group">
+          <span data-i18n="nav.qqShort">Q群</span>
+        </button>
+        <div id="qq-group-panel" class="qq-group-panel hidden" role="dialog" aria-labelledby="qq-group-title">
+          <button id="qq-group-close" class="qq-group-close" type="button" data-i18n-aria-label="nav.qqClose" aria-label="Close">×</button>
+          <p id="qq-group-title" class="qq-group-title">WebToApp 网页版</p>
+          <p class="qq-group-lead" data-i18n="nav.qqLead">点击链接加入群聊【WebToApp 网页版】</p>
+          <p class="qq-group-number-row">
+            <span data-i18n="nav.qqNumber">群号</span>
+            <strong id="qq-group-number">947508787</strong>
+          </p>
+          <div class="qq-group-actions">
+            <a class="qq-group-join" href="https://qm.qq.com/q/F9BHHJNvtm" target="_blank" rel="noopener noreferrer" data-i18n="nav.qqJoin">加入群聊</a>
+            <button id="qq-group-copy" class="qq-group-copy" type="button" data-i18n="nav.qqCopy">复制群号</button>
+          </div>
+          <p id="qq-group-status" class="qq-group-status" role="status"></p>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -540,7 +561,7 @@
     </div>
   </div>
 
-  <script src="js/mdmini.js?v=20260914-tagfix1"></script>
-  <script src="js/app.v5.js?v=20260914-tagfix1"></script>
+  <script src="js/mdmini.js?v=20261008-qq2"></script>
+  <script src="js/app.v5.js?v=20261008-qq2"></script>
 </body>
 </html>
