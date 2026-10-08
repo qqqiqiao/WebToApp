@@ -15,6 +15,8 @@
 
 [English](../README.md) · [简体中文](README.zh.md) · [日本語](README.ja.md) · [العربية](README.ar.md) · **Русский** · [Español](README.es.md) · [Português](README.pt.md) · [Français](README.fr.md) · [Deutsch](README.de.md)
 
+Группа QQ **947508787**
+
 </div>
 
 ---

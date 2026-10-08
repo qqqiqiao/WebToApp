@@ -15,6 +15,8 @@ Um link entra, saem produtos prontos para **iPhone / iPad · Android · Windows 
 
 [English](../README.md) · [简体中文](README.zh.md) · [日本語](README.ja.md) · [العربية](README.ar.md) · [Русский](README.ru.md) · [Español](README.es.md) · **Português** · [Français](README.fr.md) · [Deutsch](README.de.md)
 
+Grupo QQ **947508787**
+
 </div>
 
 ---
