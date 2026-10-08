@@ -1583,7 +1583,16 @@ section {
   }
 
   .nav-actions {
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .qq-group-btn {
+    padding: 0 8px;
+    font-size: 0.78rem;
+  }
+
+  #lang-select {
+    max-width: 6.6rem;
   }
 
   #hero {
@@ -1789,7 +1798,7 @@ section {
   color: var(--ink, #1e1914);
   font-size: 0.86rem;
   font-weight: 650;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
 }
 
