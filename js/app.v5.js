@@ -949,7 +949,7 @@
     function openPanel() {
       panel.classList.remove('hidden');
       btn.setAttribute('aria-expanded', 'true');
-      const join = panel.querySelector('.qq-group-join');
+      const join = panel.querySelector('.community-link');
       if (join) join.focus();
     }
 
