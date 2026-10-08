@@ -17,6 +17,7 @@
 3. [Окружение Python](#3-окружение-python)
 4. [Конфигурация](#4-конфигурация)
 5. [Локальный запуск](#5-локальный-запуск)
+   - [Docker](#docker)
 6. [Запуск как служба (systemd)](#6-запуск-как-служба-systemd)
 7. [Обратный прокси (Nginx)](#7-обратный-прокси-nginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 Откройте <http://127.0.0.1:8000>. Для локальной разработки переменные окружения не нужны.
+
+## Docker
+
+Одна команда собирает образ и запускает сайт на порту 8000. В образ по умолчанию входят Python, JDK, Android SDK и apktool, поэтому пакеты Android — настоящие APK. Уже созданные приложения и ключи подписи сохраняются при пересборке.
+
+```bash
+cp .env.example .env
+# Перед публикацией задайте PUBLIC_BASE_URL=https://your-domain.com.
+docker compose up -d --build
+```
+
+Откройте <http://127.0.0.1:8000>. Первая сборка скачивает Android SDK с `dl.google.com` и apktool с GitHub. Нужен исходящий доступ и около 2 ГБ памяти.
+
+Что сохраняется:
+
+- том `webtoapp-generated` — приложения, история и база сообщества
+- `./certs` — keystore Android для каждого приложения и необязательные PEM для iOS (`ios-cert.pem`, `ios-key.pem`, `ios-chain.pem`)
+
+Поставьте обратный прокси на порт 8000. Прокси в частных сетях могут передавать `X-Forwarded-*`. Иначе задайте `DOCKER_TRUSTED_PROXY_CIDRS` в `.env`.
+
+Образ поменьше, без Android-инструментов (Android станет PWA-zip):
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+Обновление:
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. Запуск как служба (systemd)
 

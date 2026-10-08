@@ -165,6 +165,14 @@ Open http://127.0.0.1:8000.
 > No environment variables are needed for local development. When deploying publicly, set `PUBLIC_BASE_URL`,
 > otherwise iPhones cannot open `localhost`. See [`.env.example`](.env.example) for the full list.
 
+### Docker
+
+```bash
+docker compose up -d --build
+```
+
+The image includes the Android build tools. See [docs/DEPLOY.md](docs/DEPLOY.md#docker).
+
 ## Deployment
 
 > For a complete step-by-step production guide (systemd, Nginx, HTTPS, Android/iOS, R2), see **[docs/DEPLOY.md](docs/DEPLOY.md)**.

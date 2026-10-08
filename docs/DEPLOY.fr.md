@@ -17,6 +17,7 @@ Guide pas à pas pour exécuter WebToApp en production.
 3. [Environnement Python](#3-environnement-python)
 4. [Configuration](#4-configuration)
 5. [Lancer en local](#5-lancer-en-local)
+   - [Docker](#docker)
 6. [Lancer en tant que service (systemd)](#6-lancer-en-tant-que-service-systemd)
 7. [Proxy inverse (Nginx)](#7-proxy-inverse-nginx)
 8. [HTTPS](#8-https)
@@ -83,6 +84,38 @@ uvicorn server.main:app --host 127.0.0.1 --port 8000
 ```
 
 Ouvrez <http://127.0.0.1:8000>. En développement local, aucune variable d'environnement n'est nécessaire.
+
+## Docker
+
+Une commande construit l'image et démarre le site sur le port 8000. L'image par défaut contient Python, un JDK, le SDK Android et apktool : les paquets Android sont de vrais APK. Les applis déjà générées et les clés de signature survivent à une reconstruction.
+
+```bash
+cp .env.example .env
+# Avant de publier, réglez PUBLIC_BASE_URL=https://your-domain.com.
+docker compose up -d --build
+```
+
+Ouvrez <http://127.0.0.1:8000>. Le premier build télécharge le SDK Android depuis `dl.google.com` et apktool depuis GitHub. Il faut un accès sortant et environ 2 Go de RAM.
+
+Ce qui est conservé :
+
+- le volume `webtoapp-generated` — applis, historique et base communautaire
+- `./certs` — keystores Android par appli, et PEM iOS facultatifs (`ios-cert.pem`, `ios-key.pem`, `ios-chain.pem`)
+
+Placez un reverse proxy devant le port 8000. Les proxys sur une adresse privée sont autorisés à envoyer `X-Forwarded-*`. Sinon, définissez `DOCKER_TRUSTED_PROXY_CIDRS` dans `.env`.
+
+Image plus petite, sans la chaîne Android (Android devient un zip PWA) :
+
+```bash
+WITH_ANDROID=0 docker compose up -d --build
+```
+
+Mise à jour :
+
+```bash
+git pull
+docker compose up -d --build
+```
 
 ## 6. Lancer en tant que service (systemd)
 

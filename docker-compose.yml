@@ -1,0 +1,32 @@
+# One-click WebToApp.
+#   cp .env.example .env          # optional; set PUBLIC_BASE_URL for a public site
+#   docker compose up -d --build
+# Then open http://127.0.0.1:8000
+#
+# Smaller image, without the Android SDK (Android becomes a PWA zip):
+#   WITH_ANDROID=0 docker compose up -d --build
+
+services:
+  webtoapp:
+    build:
+      context: .
+      args:
+        WITH_ANDROID: ${WITH_ANDROID:-1}
+    image: webtoapp:local
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # The process sees the reverse proxy, not the visitor. Trust private
+      # ranges so X-Forwarded-* and per-IP limits work. Set
+      # DOCKER_TRUSTED_PROXY_CIDRS in .env if the proxy uses another address.
+      TRUSTED_PROXY_CIDRS: ${DOCKER_TRUSTED_PROXY_CIDRS:-172.16.0.0/12,10.0.0.0/8,192.168.0.0/16,127.0.0.1/32,::1/128}
+    volumes:
+      - webtoapp-generated:/app/generated
+      - ./certs:/app/certs
+    restart: unless-stopped
+
+volumes:
+  webtoapp-generated:
