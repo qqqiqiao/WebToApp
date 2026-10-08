@@ -15,6 +15,8 @@ Un enlace entra, salen productos terminados para **iPhone / iPad · Android · W
 
 [English](../README.md) · [简体中文](README.zh.md) · [日本語](README.ja.md) · [العربية](README.ar.md) · [Русский](README.ru.md) · **Español** · [Português](README.pt.md) · [Français](README.fr.md) · [Deutsch](README.de.md)
 
+Grupo QQ **947508787**
+
 </div>
 
 ---

@@ -15,6 +15,8 @@ One link in, finished products out for **iPhone / iPad · Android · Windows · 
 
 **English** · [简体中文](docs/README.zh.md) · [日本語](docs/README.ja.md) · [العربية](docs/README.ar.md) · [Русский](docs/README.ru.md) · [Español](docs/README.es.md) · [Português](docs/README.pt.md) · [Français](docs/README.fr.md) · [Deutsch](docs/README.de.md)
 
+QQ group **947508787**
+
 </div>
 
 ---
