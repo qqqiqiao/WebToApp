@@ -1570,9 +1570,20 @@ section {
   }
 }
 
+@media (max-width: 560px) {
+  .logo span {
+    display: none;
+  }
+}
+
 @media (max-width: 720px) {
   #nav {
-    padding-inline: 18px;
+    padding-inline: 14px;
+    gap: 10px;
+  }
+
+  .nav-actions {
+    gap: 8px;
   }
 
   #hero {
@@ -1726,14 +1737,16 @@ section {
   display: inline-flex;
   align-items: center;
   gap: 12px;
+  flex: none;
 }
 
 .gh-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  align-self: stretch;        /* match the language pill's height exactly */
-  aspect-ratio: 1 / 1;        /* keep a perfect circle at that height */
+  flex: none;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   color: var(--ink, #1e1914);
   border: 1px solid rgba(30, 25, 20, 0.16);
@@ -1753,6 +1766,157 @@ section {
 
 .gh-link svg {
   display: block;
+}
+
+.qq-group {
+  position: relative;
+  display: inline-flex;
+  align-self: stretch;
+}
+
+.qq-group-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  height: 40px;
+  min-width: 44px;
+  padding: 0 12px;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid rgba(30, 25, 20, 0.16);
+  background-color: rgba(255, 251, 246, 0.72);
+  color: var(--ink, #1e1914);
+  font-size: 0.86rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.qq-group-btn:hover,
+.qq-group-btn[aria-expanded="true"] {
+  border-color: rgba(30, 25, 20, 0.32);
+  color: var(--accent, #c97953);
+}
+
+.qq-group-btn:focus-visible {
+  outline: 2px solid var(--accent, #c97953);
+  outline-offset: 2px;
+}
+
+.qq-group-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  inset-inline-end: 0;
+  z-index: 30;
+  width: min(300px, calc(100vw - 28px));
+  padding: 16px 16px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(30, 25, 20, 0.1);
+  background: var(--paper-strong, #fbf8f3);
+  box-shadow: 0 16px 40px rgba(30, 25, 20, 0.16);
+}
+
+.qq-group-close {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: rgba(30, 25, 20, 0.5);
+}
+
+.qq-group-close:hover {
+  color: var(--ink, #1e1914);
+}
+
+.qq-group-title {
+  margin: 0;
+  margin-inline-end: 28px;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.qq-group-lead {
+  margin: 8px 0 0;
+  color: var(--ink-soft, rgba(30, 25, 20, 0.72));
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.qq-group-number-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 12px 0 0;
+  color: var(--ink-soft, rgba(30, 25, 20, 0.72));
+  font-size: 0.88rem;
+}
+
+.qq-group-number-row strong {
+  color: var(--ink, #1e1914);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+
+.qq-group-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.qq-group-join,
+.qq-group-copy {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.qq-group-join {
+  background: var(--ink, #1e1914);
+  color: #fffaf4;
+}
+
+.qq-group-join:hover {
+  background: #2e2620;
+}
+
+.qq-group-copy {
+  border: 1px solid rgba(30, 25, 20, 0.16);
+  background: rgba(255, 251, 246, 0.8);
+}
+
+.qq-group-copy:hover {
+  border-color: rgba(30, 25, 20, 0.32);
+}
+
+.qq-group-status {
+  margin: 8px 0 0;
+  min-height: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--ink-soft, rgba(30, 25, 20, 0.72));
+}
+
+.qq-group-status:empty {
+  display: none;
+}
+
+.qq-group-status.is-failed {
+  color: #8a4b2d;
 }
 
 #lang-select {
@@ -2340,8 +2504,8 @@ section {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   flex: none;
   border-radius: 999px;
   color: var(--ink, #1e1914);
