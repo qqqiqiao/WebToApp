@@ -1809,7 +1809,7 @@ section {
   top: calc(100% + 10px);
   inset-inline-end: 0;
   z-index: 30;
-  width: min(300px, calc(100vw - 28px));
+  width: min(320px, calc(100vw - 28px));
   padding: 16px 16px 14px;
   border-radius: 14px;
   border: 1px solid rgba(30, 25, 20, 0.1);
@@ -1838,6 +1838,31 @@ section {
   font-weight: 700;
   font-size: 1rem;
   line-height: 1.35;
+}
+
+.community-block + .community-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(30, 25, 20, 0.08);
+}
+
+.community-kicker {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint, rgba(30, 25, 20, 0.46));
+}
+
+.community-name {
+  margin: 6px 0 0;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.community-link {
+  width: 100%;
+  margin-top: 12px;
 }
 
 .qq-group-lead {
