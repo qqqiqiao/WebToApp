@@ -568,6 +568,7 @@
             <div class="history-name-block">
               <div class="history-name">${escapeHtml(item.name || item.app_id)}${htmlBadge}</div>
               <div class="history-link">${escapeHtml(publicPath)}</div>
+              ${item.icon_review_deadline ? `<p class="history-icon-review">${escapeHtml(t('history.iconReview', { deadline: formatDeadline(item.icon_review_deadline) }))}</p>` : ''}
             </div>
           </div>
           <div class="history-meta">
@@ -665,6 +666,7 @@
           <div style="min-width:0">
             <div class="market-card-name">${escapeHtml(item.name || item.app_id)}</div>
             <div class="market-card-url">${escapeHtml(item.target_url || '')}</div>
+            ${item.icon_review_deadline ? `<span class="market-icon-review">${escapeHtml(t('market.iconReview'))}</span>` : ''}
           </div>
         </div>
         ${creatorHtml ? `<div class="market-card-creator">${creatorHtml}${createdStr ? `<span class="market-card-date">${escapeHtml(createdStr)}</span>` : ''}</div>` : (createdStr ? `<div class="market-card-creator"><span class="market-card-date">${escapeHtml(createdStr)}</span></div>` : '')}
@@ -680,6 +682,20 @@
       fragment.appendChild(card);
     });
     marketList.appendChild(fragment);
+  }
+
+  function formatDeadline(iso) {
+    const ts = Date.parse(iso || '');
+    if (!ts) return String(iso || '');
+    try {
+      return new Intl.DateTimeFormat(locale(), {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'UTC',
+      }).format(ts) + ' UTC';
+    } catch (_err) {
+      return String(iso);
+    }
   }
 
   function relTime(iso) {
@@ -1871,6 +1887,9 @@
           const code = typeof detail.detail === 'string' ? detail.detail : '';
           if (res.status === 409 && code === 'duplicate_public_app') {
             throw new Error(t('err.duplicatePublic'));
+          }
+          if (res.status === 409 && code === 'icon_review_expired') {
+            throw new Error(t('err.iconReviewExpired'));
           }
           throw new Error(code || 'visibility failed');
         }

@@ -62,12 +62,12 @@ def is_unusable_icon(data: bytes, limit: float = SOLID_ICON_RATIO) -> bool:
     return ratio + 1e-9 >= limit
 
 
-def strip_solid_icons(apps_dir: Path) -> int:
-    """Delete public icon files that are a flat color. Returns how many went."""
+def strip_solid_icons(apps_dir: Path) -> list:
+    """Delete flat-color icon files. Returns the app ids that lost one."""
     root = Path(apps_dir)
     if not root.is_dir():
         return 0
-    removed = 0
+    removed = []
     for icon_path in root.glob("*/icon.png"):
         if icon_path.parent.name.startswith("_"):
             continue
@@ -89,5 +89,5 @@ def strip_solid_icons(apps_dir: Path) -> int:
                 page_path.unlink()
         except OSError:
             pass
-        removed += 1
+        removed.append(icon_path.parent.name)
     return removed

@@ -208,6 +208,14 @@ class MarketAndVisibilityTests(unittest.TestCase):
     def _cookies(self):
         return {"webtoapp_device_fingerprint": self.FP}
 
+    def test_history_and_market_show_an_open_icon_deadline(self):
+        self._build("solid001", "public", ["tools"])
+        main.history_store.flag_icon_review("solid001", flagged_at="2026-10-13T16:00:00Z")
+        history = self.client.get("/api/history", cookies=self._cookies()).json()["items"]
+        self.assertEqual(history[0]["icon_review_deadline"], "2026-10-20T16:00:00Z")
+        market = self.client.get("/api/market").json()["items"]
+        self.assertEqual(market[0]["icon_review_deadline"], "2026-10-20T16:00:00Z")
+
     def test_market_lists_only_public_apps(self):
         self._build("pub1", "public", ["tools"])
         self._build("priv1", "private", ["tools"])

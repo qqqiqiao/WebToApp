@@ -106,6 +106,151 @@ main {
   z-index: 1;
 }
 
+.announce {
+  padding-top: 18px;
+  padding-bottom: 0;
+}
+
+.announce-board {
+  max-height: 440px;
+  overflow: auto;
+  padding: 18px 18px 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface-strong);
+}
+
+.announce-kicker {
+  color: var(--ink-faint);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.announce-heading {
+  margin-top: 4px;
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.announce-timeline {
+  list-style: none;
+  margin-top: 14px;
+}
+
+.announce-item {
+  display: grid;
+  grid-template-columns: 108px 18px minmax(0, 1fr);
+  column-gap: 12px;
+}
+
+.announce-date {
+  padding-top: 2px;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.announce-rail {
+  position: relative;
+}
+
+.announce-rail::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: var(--line-strong);
+}
+
+.announce-item:last-child .announce-rail::before {
+  display: none;
+}
+
+.announce-dot {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 9px;
+  height: 9px;
+  margin: 6px auto 0;
+  border: 2px solid var(--paper-strong, #fbf8f3);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.announce-entry {
+  min-width: 0;
+  padding-bottom: 16px;
+}
+
+.announce-title {
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.announce-title::-webkit-details-marker {
+  display: none;
+}
+
+.announce-body {
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.94rem;
+}
+
+.announce-body p + p {
+  margin-top: 8px;
+}
+
+.history-icon-review {
+  margin-top: 6px;
+  color: var(--danger);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.market-icon-review {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(160, 83, 61, 0.12);
+  color: var(--danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .announce-item {
+    grid-template-columns: 18px minmax(0, 1fr);
+  }
+
+  .announce-date {
+    grid-column: 2;
+    grid-row: 1;
+    padding-bottom: 2px;
+    text-align: left;
+  }
+
+  .announce-rail {
+    grid-row: 1 / span 2;
+  }
+
+  .announce-entry {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
+
 section {
   padding-inline: clamp(22px, 4vw, 52px);
 }

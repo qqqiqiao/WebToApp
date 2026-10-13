@@ -654,7 +654,10 @@ class Distiller:
             return custom_icon
         if recipe.get("source_type") == "html":
             # Content is local. A flat-color favicon is not an icon.
-            return self._usable_icon(self._local_site_icon(recipe))
+            local, rejected = self._local_site_icon(recipe)
+            if rejected:
+                recipe["_icon_rejected"] = rejected
+            return local
         url = recipe["url"]
         host = urlparse(url).netloc.lower()
         cache_key = f"icon:{host}"
@@ -665,7 +668,15 @@ class Distiller:
             # Recent sweep found nothing usable — skip re-fetching for ~60s.
             return None
         candidates = self._collect_icon_candidates(url)
-        best = self._choose_best_icon(candidates)
+        picked = self._choose_best_icon(candidates)
+        best, saw_solid = (None, False)
+        if isinstance(picked, tuple):
+            best = picked[0]
+            saw_solid = bool(picked[1]) if len(picked) > 1 else False
+        elif picked:
+            best = picked
+        if saw_solid and not best:
+            recipe["_icon_rejected"] = "solid"
         if best:
             icon_cache.set(cache_key, best)
             return best
@@ -681,13 +692,15 @@ class Distiller:
         """Favicon extracted from the staged HTML bundle (PNG or ICO → PNG)."""
         site_dir = self._generated_root() / recipe["id"] / "site"
         if not site_dir.is_dir():
-            return None
+            return None, None
         meta = html_site.extract_site_meta(site_dir)
         raw = meta.get("icon_png")
         if not raw:
-            return None
+            return None, None
         png = self._normalize_to_png(raw)
-        return None if png and is_unusable_icon(png) else png
+        if png and is_unusable_icon(png):
+            return None, "solid"
+        return png, None
 
     def _custom_icon_png(self, data_url):
         """Return ``(png_or_None, reject_reason_or_None)``.
@@ -852,8 +865,9 @@ class Distiller:
         limit = int(config.icon_candidate_limit() or 6)
         timeout = float(config.icon_fetch_timeout() or 4)
         urls = list(candidate_urls[:limit])
+        saw_solid = False
         if not urls:
-            return None
+            return None, saw_solid
 
         def fetch_one(url):
             data = self._fetch_url_bytes(url, timeout=timeout)
@@ -878,11 +892,12 @@ class Distiller:
                     continue
                 png, dim, _url = result
                 if is_unusable_icon(png):
+                    saw_solid = True
                     continue
                 if dim > best_dim:
                     best_dim = dim
                     best_png = png
-        return best_png
+        return best_png, saw_solid
 
     def _png_dimension(self, png_data):
         if len(png_data) < 24 or png_data[:4] != b"\x89PNG":

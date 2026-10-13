@@ -4,7 +4,7 @@ import sqlite3
 import threading
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Optional
 
@@ -92,6 +92,13 @@ class HistoryStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_apps_created_at ON apps(created_at);
                 CREATE INDEX IF NOT EXISTS idx_visits_last_visited_at ON visits(last_visited_at);
+                CREATE TABLE IF NOT EXISTS icon_reviews (
+                    app_id TEXT PRIMARY KEY,
+                    reason TEXT NOT NULL,
+                    flagged_at TEXT NOT NULL,
+                    deadline_at TEXT NOT NULL,
+                    resolved_at TEXT
+                );
                 """
             )
             try:
@@ -701,6 +708,74 @@ class HistoryStore:
         with self._lock:
             self._flush_visits_locked()
             return app_id in self._get_device_app_ids_locked(device_fingerprint)
+
+    def flag_icon_review(self, app_id: str, flagged_at: Optional[str] = None, days: int = 7) -> bool:
+        """Open a review. An already-open review keeps its original deadline."""
+        app_id = str(app_id or "").strip()
+        if not app_id:
+            return False
+        start = flagged_at or _utc_now()
+        try:
+            deadline = (
+                _parse_utc(start) + timedelta(days=days)
+            ).astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        except (TypeError, ValueError, AttributeError):
+            return False
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT resolved_at FROM icon_reviews WHERE app_id = ?", (app_id,)
+            ).fetchone()
+            if row and not row["resolved_at"]:
+                return False
+            if row:
+                self._conn.execute(
+                    """UPDATE icon_reviews
+                       SET reason = ?, flagged_at = ?, deadline_at = ?, resolved_at = NULL
+                       WHERE app_id = ?""",
+                    ("solid", start, deadline, app_id),
+                )
+            else:
+                self._conn.execute(
+                    """INSERT INTO icon_reviews(app_id, reason, flagged_at, deadline_at, resolved_at)
+                       VALUES (?, ?, ?, ?, NULL)""",
+                    (app_id, "solid", start, deadline),
+                )
+            return True
+
+    def resolve_icon_review(self, app_id: str) -> bool:
+        app_id = str(app_id or "").strip()
+        if not app_id:
+            return False
+        with self._lock:
+            cur = self._conn.execute(
+                "UPDATE icon_reviews SET resolved_at = ? WHERE app_id = ? AND resolved_at IS NULL",
+                (_utc_now(), app_id),
+            )
+            return cur.rowcount > 0
+
+    def open_icon_reviews(self, app_ids: Optional[List[str]] = None) -> dict:
+        with self._lock:
+            if app_ids is None:
+                rows = self._conn.execute(
+                    "SELECT * FROM icon_reviews WHERE resolved_at IS NULL"
+                ).fetchall()
+            else:
+                ids = [str(a) for a in app_ids if a]
+                if not ids:
+                    return {}
+                placeholders = ",".join("?" for _ in ids)
+                rows = self._conn.execute(
+                    f"SELECT * FROM icon_reviews WHERE resolved_at IS NULL AND app_id IN ({placeholders})",
+                    ids,
+                ).fetchall()
+        return {
+            row["app_id"]: {
+                "reason": row["reason"],
+                "flagged_at": row["flagged_at"],
+                "deadline_at": row["deadline_at"],
+            }
+            for row in rows
+        }
 
     def fetch_app_rows(self, app_ids: List[str]) -> List[dict]:
         """Raw app rows for the duplicate check. Includes private apps."""

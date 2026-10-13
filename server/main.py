@@ -39,7 +39,8 @@ from server.engine.cache import analysis_cache, html_cache, icon_cache
 from server.engine.storage import r2_storage
 from server.community_store import CommunityStore, MAX_BIO_LEN, MAX_COMMENT_LEN
 from server.history_store import HistoryStore
-from server.engine.icon_quality import strip_solid_icons
+from server.engine.icon_quality import is_unusable_icon
+from server.icon_review import review_deadline_passed, run_icon_review_pass
 from server.market_dedupe import conflicts_with_newer, dedupe_creator, dedupe_public_market
 from server.logging_util import log_event, setup_logging
 from server.task_store import TaskStore
@@ -530,8 +531,17 @@ def _device_fingerprint(request: Request) -> Optional[str]:
     return cleaned or None
 
 
+def _decorate_icon_reviews(items) -> None:
+    reviews = history_store.open_icon_reviews([item.get("app_id") for item in items])
+    for item in items:
+        review = reviews.get(item.get("app_id"))
+        if review:
+            item["icon_review_deadline"] = review["deadline_at"]
+
+
 def _history_payload(request: Request) -> dict:
     items = history_store.list_history(_device_fingerprint(request), APPS_DIR)
+    _decorate_icon_reviews(items)
     return {"items": items}
 
 
@@ -651,6 +661,15 @@ def _build_distill_response(payload: dict, progress_cb=None) -> dict:
     }
     if recipe.get("_icon_rejected"):
         response["icon_rejected"] = recipe["_icon_rejected"]
+    icon_path = APPS_DIR / app_id / "icon.png"
+    try:
+        icon_ok = icon_path.is_file() and not is_unusable_icon(icon_path.read_bytes())
+    except OSError:
+        icon_ok = False
+    if icon_ok:
+        history_store.resolve_icon_review(app_id)
+    elif recipe.get("_icon_rejected") == "solid":
+        history_store.flag_icon_review(app_id)
     return response
 
 
@@ -845,6 +864,7 @@ async def _retention_loop() -> None:
         try:
             await asyncio.sleep(APP_RETENTION_SWEEP_INTERVAL_SECONDS)
             await asyncio.to_thread(_purge_expired_generated_apps)
+            await asyncio.to_thread(_run_icon_review_pass)
         except asyncio.CancelledError:
             raise
         except Exception as exc:
@@ -867,14 +887,24 @@ async def _startup_services():
             )
     except Exception as exc:
         log_event("market_dedupe_failed", error=str(exc))
-    try:
-        removed_icons = await asyncio.to_thread(strip_solid_icons, APPS_DIR)
-        if removed_icons:
-            log_event("solid_icons_removed", count=removed_icons)
-    except Exception as exc:
-        log_event("solid_icon_sweep_failed", error=str(exc))
+    await asyncio.to_thread(_run_icon_review_pass)
     await distill_queue.start()
     retention_task = asyncio.create_task(_retention_loop(), name="app-retention-sweeper")
+
+
+def _run_icon_review_pass() -> None:
+    try:
+        summary = run_icon_review_pass(history_store, APPS_DIR)
+    except Exception as exc:
+        log_event("icon_review_failed", error=str(exc))
+        return
+    if summary.get("stripped") or summary.get("flagged") or summary.get("unpublished"):
+        log_event(
+            "icon_review",
+            stripped=len(summary.get("stripped") or []),
+            flagged=len(summary.get("flagged") or []),
+            unpublished=len(summary.get("unpublished") or []),
+        )
 
 
 def _enforce_daily_quota(device_fingerprint: Optional[str]) -> None:
@@ -1490,6 +1520,7 @@ def market_listing(tag: Optional[str] = None, search: Optional[str] = None, sort
         ), reverse=True)
     total = len(items)
     items = items[:60]
+    _decorate_icon_reviews(items)
     return {"items": items, "sort": sort, "total": total}
 
 
@@ -1519,6 +1550,7 @@ def my_profile(request: Request):
     fp = _require_fingerprint(request)
     profile = community_store.ensure_user(fp)
     apps = history_store.list_history(fp, APPS_DIR)
+    _decorate_icon_reviews(apps)
     return {"profile": profile, "apps": apps}
 
 
@@ -1568,6 +1600,7 @@ def public_user_profile(user_num: str):
     fp = community_store.fp_by_num(int(user_num))
     app_ids = community_store.apps_by_creator(fp) if fp else []
     apps = history_store.public_snapshots(app_ids, APPS_DIR)
+    _decorate_icon_reviews(apps)
     return {"profile": profile, "apps": apps}
 
 
@@ -1648,6 +1681,15 @@ def set_history_visibility(app_id: str, payload: VisibilityPayload, request: Req
     if visibility == "public" and not (stored.get("tags") or []):
         raise HTTPException(400, "Public apps need at least one tag")
     creator_fp = community_store.creator_of(app_id)
+    if visibility == "public":
+        review = history_store.open_icon_reviews([app_id]).get(app_id)
+        icon_path = APPS_DIR / app_id / "icon.png"
+        try:
+            icon_ok = icon_path.is_file() and not is_unusable_icon(icon_path.read_bytes())
+        except OSError:
+            icon_ok = False
+        if review and not icon_ok and review_deadline_passed(review["deadline_at"]):
+            raise HTTPException(409, "icon_review_expired")
     if (
         visibility == "public"
         and creator_fp
