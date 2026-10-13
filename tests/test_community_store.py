@@ -105,13 +105,39 @@ class CommunityStoreTests(unittest.TestCase):
         long_body = self.store.add_comment("app1", "fp-a", "y" * (MAX_COMMENT_LEN + 10), None)
         self.assertEqual(len(long_body["body"]), MAX_COMMENT_LEN)
 
-    def test_each_comment_rating_counts_independently(self):
-        self.store.add_comment("app1", "fp-a", "one", 5)
-        self.store.add_comment("app1", "fp-a", "two", 3)   # same user, counts again
-        self.store.add_comment("app1", "fp-b", "no rating", None)
+    def test_repeat_rating_replaces_the_previous_one(self):
+        first = self.store.add_comment("app1", "fp-a", "one", 5)
+        second = self.store.add_comment("app1", "fp-a", "two", 3)
+        self.assertEqual(first["id"], second["id"])
+        self.assertEqual(second["body"], "two")
+        self.assertEqual(second["rating"], 3)
+        # A note without a score does not erase the rating, and someone
+        # else still counts as a second vote.
+        self.store.add_comment("app1", "fp-a", "just a note", None)
+        self.store.add_comment("app1", "fp-b", "other", 4)
         stats = self.store.rating_stats("app1")
         self.assertEqual(stats["count"], 2)
-        self.assertEqual(stats["avg"], 4.0)
+        self.assertEqual(stats["avg"], 3.5)
+        self.assertEqual(len(self.store.list_comments("app1")), 3)
+
+    def test_collapse_duplicate_ratings_keeps_the_newest(self):
+        self.store.ensure_user("fp-a")
+        self.store._conn.executemany(
+            "INSERT INTO comments(app_id, fp, body, rating, created_at) VALUES (?, ?, ?, ?, ?)",
+            [
+                ("app1", "fp-a", "old", 1, "2026-01-01T00:00:00Z"),
+                ("app1", "fp-a", "mid", 2, "2026-02-01T00:00:00Z"),
+                ("app1", "fp-a", "new", 5, "2026-03-01T00:00:00Z"),
+                ("app1", "fp-a", "note", None, "2026-04-01T00:00:00Z"),
+            ],
+        )
+        self.assertEqual(self.store.collapse_duplicate_ratings(), 2)
+        self.assertEqual(self.store.collapse_duplicate_ratings(), 0)
+        stats = self.store.rating_stats("app1")
+        self.assertEqual(stats["count"], 1)
+        self.assertEqual(stats["avg"], 5.0)
+        bodies = sorted(item["body"] for item in self.store.list_comments("app1"))
+        self.assertEqual(bodies, ["new", "note"])
 
     # ---------- backfill ----------
 

@@ -1854,7 +1854,11 @@
         });
         if (!res.ok) {
           const detail = await res.json().catch(() => ({}));
-          throw new Error(detail.detail || 'visibility failed');
+          const code = typeof detail.detail === 'string' ? detail.detail : '';
+          if (res.status === 409 && code === 'duplicate_public_app') {
+            throw new Error(t('err.duplicatePublic'));
+          }
+          throw new Error(code || 'visibility failed');
         }
         const data = await res.json();
         renderHistory((data.history && data.history.items) || []);

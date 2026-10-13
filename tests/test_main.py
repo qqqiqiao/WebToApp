@@ -591,11 +591,11 @@ class CommunityEndpointTests(unittest.TestCase):
     def _cookies(self, fp):
         return {"webtoapp_device_fingerprint": fp}
 
-    def _make_app(self, app_id, fp, visibility="public", name=None):
+    def _make_app(self, app_id, fp, visibility="public", name=None, url=None):
         (self.apps_dir / app_id).mkdir(parents=True, exist_ok=True)
         recipe = {
             "id": app_id, "name": name or f"App {app_id}",
-            "url": f"https://{app_id}.test",
+            "url": url or f"https://{app_id}.test",
             "visibility": visibility, "tags": ["tools"],
             "edit_token": f"tok-{app_id}",
         }
@@ -786,6 +786,61 @@ class CommunityEndpointTests(unittest.TestCase):
         self.assertEqual([i["app_id"] for i in by_num], ["mkt1"])
         by_name = self.client.get("/api/market", params={"search": "maker"}).json()["items"]
         self.assertEqual([i["app_id"] for i in by_name], ["mkt1"])
+
+    def test_newer_public_app_retires_the_older_same_name(self):
+        self._make_app("oldname01", self.FP_A, "public", name="핑크 어드벤처",
+                       url="https://s.example/a/oldname01/site/index.html")
+        self._make_app("newname01", self.FP_A, "private", name="핑크-어드벤처",
+                       url="https://s.example/a/newname01/site/index.html")
+        with main.history_store._lock:
+            main.history_store._conn.execute(
+                "UPDATE apps SET created_at = ? WHERE app_id = ?",
+                ("2020-01-01T00:00:00Z", "oldname01"),
+            )
+        resp = self.client.post(
+            "/api/history/newname01/visibility",
+            json={"visibility": "public", "edit_token": "tok-newname01"},
+            cookies=self._cookies(self.FP_A),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["retired_app_ids"], ["oldname01"])
+        ids = [item["app_id"] for item in self.client.get("/api/market").json()["items"]]
+        self.assertIn("newname01", ids)
+        self.assertNotIn("oldname01", ids)
+        stored = json.loads((self.apps_dir / "oldname01" / "recipe.json").read_text())
+        self.assertEqual(stored["visibility"], "private")
+
+    def test_older_duplicate_cannot_become_public(self):
+        self._make_app("newerok1", self.FP_A, "public", name="Woofy", url="https://panel.example")
+        self._make_app("olderdup1", self.FP_A, "private", name="woofy", url="https://tpanel.example")
+        with main.history_store._lock:
+            main.history_store._conn.execute(
+                "UPDATE apps SET created_at = ? WHERE app_id = ?",
+                ("2020-01-01T00:00:00Z", "olderdup1"),
+            )
+        resp = self.client.post(
+            "/api/history/olderdup1/visibility",
+            json={"visibility": "public", "edit_token": "tok-olderdup1"},
+            cookies=self._cookies(self.FP_A),
+        )
+        self.assertEqual(resp.status_code, 409)
+        self.assertEqual(resp.json()["detail"], "duplicate_public_app")
+        ids = [item["app_id"] for item in self.client.get("/api/market").json()["items"]]
+        self.assertEqual(ids, ["newerok1"])
+        stored = json.loads((self.apps_dir / "olderdup1" / "recipe.json").read_text())
+        self.assertEqual(stored["visibility"], "private")
+
+    def test_other_creator_may_publish_the_same_name(self):
+        self._make_app("git11111", self.FP_A, "public", name="GitHub", url="https://github.com")
+        self._make_app("git22222", self.FP_B, "private", name="Github", url="https://github.com/")
+        resp = self.client.post(
+            "/api/history/git22222/visibility",
+            json={"visibility": "public", "edit_token": "tok-git22222"},
+            cookies=self._cookies(self.FP_B),
+        )
+        self.assertEqual(resp.status_code, 200)
+        ids = sorted(item["app_id"] for item in self.client.get("/api/market").json()["items"])
+        self.assertEqual(ids, ["git11111", "git22222"])
 
     def test_community_endpoint_reports_creator_and_other_apps(self):
         self._make_app("mine1", self.FP_A)
