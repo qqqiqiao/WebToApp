@@ -1301,6 +1301,20 @@
       note.textContent = '';
       note.classList.add('hidden');
     }
+    let solidNote = document.getElementById('solid-icon-note');
+    if (!solidNote) {
+      solidNote = document.createElement('p');
+      solidNote.id = 'solid-icon-note';
+      solidNote.className = 'result-note';
+      if (resultPanel) resultPanel.appendChild(solidNote);
+    }
+    if (data.icon_rejected === 'solid') {
+      solidNote.textContent = t('result.solidIcon');
+      solidNote.classList.remove('hidden');
+    } else {
+      solidNote.textContent = '';
+      solidNote.classList.add('hidden');
+    }
     await loadHistory();
     scheduleGentleScroll(resultPanel, { block: 'nearest', threshold: 0.45, delay: 180 });
     return data;

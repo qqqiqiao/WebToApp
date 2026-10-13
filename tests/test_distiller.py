@@ -602,12 +602,12 @@ class IconPipelineTests(unittest.TestCase):
              patch.object(d, "_choose_best_icon", return_value=None), \
              patch.object(cache_mod.icon_cache, "get", return_value=None):
             first = d._fetch_icon(recipe)
-            self.assertIsNotNone(first)  # placeholder PNG
+            self.assertIsNone(first)
             # Second call inside the miss window must not re-sweep.
             with patch.object(d, "_collect_icon_candidates",
                               side_effect=AssertionError("re-swept")):
                 second = d._fetch_icon(recipe)
-            self.assertIsNotNone(second)
+            self.assertIsNone(second)
 
 
 def _png_bytes(size=(40, 30), fmt="PNG", color=(10, 120, 200, 255)):

@@ -39,6 +39,7 @@ from server.engine.cache import analysis_cache, html_cache, icon_cache
 from server.engine.storage import r2_storage
 from server.community_store import CommunityStore, MAX_BIO_LEN, MAX_COMMENT_LEN
 from server.history_store import HistoryStore
+from server.engine.icon_quality import strip_solid_icons
 from server.market_dedupe import conflicts_with_newer, dedupe_creator, dedupe_public_market
 from server.logging_util import log_event, setup_logging
 from server.task_store import TaskStore
@@ -516,6 +517,7 @@ def _public_recipe(recipe: dict) -> dict:
     safe.pop("_custom_icon_data_url", None)
     safe.pop("_about_text", None)
     safe.pop("_about_images", None)
+    safe.pop("_icon_rejected", None)
     safe.pop("edit_token", None)
     return safe
 
@@ -635,7 +637,7 @@ def _build_distill_response(payload: dict, progress_cb=None) -> dict:
     public_recipe = _public_recipe(recipe)
     if app_id in retired:
         public_recipe["visibility"] = "private"
-    return {
+    response = {
         "app_id": app_id,
         "url": f"/a/{app_id}",
         "recipe": public_recipe,
@@ -647,6 +649,9 @@ def _build_distill_response(payload: dict, progress_cb=None) -> dict:
         "platform_errors": build_meta.get("platform_errors") or {},
         "signing_available": mobileconfig_signer.can_sign(),
     }
+    if recipe.get("_icon_rejected"):
+        response["icon_rejected"] = recipe["_icon_rejected"]
+    return response
 
 
 def _run_distill_job(payload: dict, queue: Optional["DistillTaskQueue"] = None, loop=None) -> dict:
@@ -862,6 +867,12 @@ async def _startup_services():
             )
     except Exception as exc:
         log_event("market_dedupe_failed", error=str(exc))
+    try:
+        removed_icons = await asyncio.to_thread(strip_solid_icons, APPS_DIR)
+        if removed_icons:
+            log_event("solid_icons_removed", count=removed_icons)
+    except Exception as exc:
+        log_event("solid_icon_sweep_failed", error=str(exc))
     await distill_queue.start()
     retention_task = asyncio.create_task(_retention_loop(), name="app-retention-sweeper")
 

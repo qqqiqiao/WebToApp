@@ -25,6 +25,7 @@ from server import config
 from server.engine.apk_builder import ApkBuilder
 from server.engine import mobileconfig_signer
 from server.engine.cache import html_cache, icon_cache, icon_miss_cache
+from server.engine.icon_quality import is_unusable_icon
 from server.engine.storage import r2_storage
 from server import html_site
 from server.htmlmeta import parse_html_metadata
@@ -522,8 +523,17 @@ class Distiller:
 
         report("fetching_icon")
         icon_png = self._fetch_icon(recipe)
+        icon_path = app_dir / "icon.png"
         if icon_png:
-            (app_dir / "icon.png").write_bytes(icon_png)
+            icon_path.write_bytes(icon_png)
+        elif icon_path.exists():
+            # A rebuild that no longer has a usable icon must not keep the
+            # old flat-color square on the market.
+            try:
+                if is_unusable_icon(icon_path.read_bytes()):
+                    icon_path.unlink()
+            except OSError:
+                pass
 
         report("writing_shell")
         self._write_download_page(app_dir, recipe)
@@ -637,29 +647,35 @@ class Distiller:
     )
 
     def _fetch_icon(self, recipe):
-        custom_icon = self._custom_icon_png(recipe.get("_custom_icon_data_url"))
+        custom_icon, rejected = self._custom_icon_png(recipe.get("_custom_icon_data_url"))
+        if rejected:
+            recipe["_icon_rejected"] = rejected
         if custom_icon:
             return custom_icon
         if recipe.get("source_type") == "html":
-            # Content is local: custom icon > favicon declared in the uploaded
-            # HTML > solid-color placeholder. No network fallback.
-            return self._local_site_icon(recipe) or self._make_placeholder_png(recipe.get("color", "#7c3aed"))
+            # Content is local. A flat-color favicon is not an icon.
+            return self._usable_icon(self._local_site_icon(recipe))
         url = recipe["url"]
         host = urlparse(url).netloc.lower()
         cache_key = f"icon:{host}"
         cached = icon_cache.get(cache_key)
-        if cached is not None:
+        if cached and not is_unusable_icon(cached):
             return cached
         if icon_miss_cache.get(cache_key) is not None:
-            # Recent sweep found nothing — skip re-fetching for ~60s.
-            return self._make_placeholder_png(recipe.get("color", "#7c3aed"))
+            # Recent sweep found nothing usable — skip re-fetching for ~60s.
+            return None
         candidates = self._collect_icon_candidates(url)
         best = self._choose_best_icon(candidates)
         if best:
             icon_cache.set(cache_key, best)
             return best
         icon_miss_cache.set(cache_key, b"")
-        return self._make_placeholder_png(recipe.get("color", "#7c3aed"))
+        return None
+
+    def _usable_icon(self, png):
+        if not png or is_unusable_icon(png):
+            return None
+        return png
 
     def _local_site_icon(self, recipe):
         """Favicon extracted from the staged HTML bundle (PNG or ICO → PNG)."""
@@ -670,19 +686,30 @@ class Distiller:
         raw = meta.get("icon_png")
         if not raw:
             return None
-        return self._normalize_to_png(raw)
+        png = self._normalize_to_png(raw)
+        return None if png and is_unusable_icon(png) else png
 
     def _custom_icon_png(self, data_url):
+        """Return ``(png_or_None, reject_reason_or_None)``.
+
+        A picture that is 90% one color is refused. Callers keep building
+        the app and simply ship it without that icon.
+        """
         if not data_url:
-            return None
+            return None, None
         match = self._DATA_URL_RE.match(str(data_url))
         if not match:
-            return None
+            return None, None
         try:
             raw = base64.b64decode(match.group("data"), validate=False)
         except Exception:
-            return None
-        return self._normalize_uploaded_icon(raw)
+            return None, None
+        png = self._normalize_uploaded_icon(raw)
+        if not png:
+            return None, None
+        if is_unusable_icon(png):
+            return None, "solid"
+        return png, None
 
     def _normalize_uploaded_icon(self, raw_bytes):
         try:
@@ -850,6 +877,8 @@ class Distiller:
                 if not result:
                     continue
                 png, dim, _url = result
+                if is_unusable_icon(png):
+                    continue
                 if dim > best_dim:
                     best_dim = dim
                     best_png = png
@@ -885,8 +914,13 @@ class Distiller:
             return None
 
     def _make_placeholder_png(self, hex_color: str, size: int = 128) -> bytes:
-        """Generate a valid solid-color RGBA PNG. Used when favicon download fails.
-        aapt2 has a bug parsing some malformed/tiny PNGs, so we always emit a proper one."""
+        """Solid-color PNG kept only so an APK rebuild still has a valid file.
+
+        It is one flat color, so it must not be saved as the app's public
+        icon.png. The market and new builds leave the icon off instead.
+        aapt2 has a bug parsing some malformed/tiny PNGs, so the bytes
+        themselves stay a well-formed image.
+        """
         h = hex_color.lstrip('#')
         if len(h) == 3:
             h = ''.join(c * 2 for c in h)
