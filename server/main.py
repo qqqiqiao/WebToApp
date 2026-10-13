@@ -39,6 +39,7 @@ from server.engine.cache import analysis_cache, html_cache, icon_cache
 from server.engine.storage import r2_storage
 from server.community_store import CommunityStore, MAX_BIO_LEN, MAX_COMMENT_LEN
 from server.history_store import HistoryStore
+from server.market_dedupe import conflicts_with_newer, dedupe_creator, dedupe_public_market
 from server.logging_util import log_event, setup_logging
 from server.task_store import TaskStore
 
@@ -625,13 +626,20 @@ def _build_distill_response(payload: dict, progress_cb=None) -> dict:
     _creator_fp = payload.get("device_fingerprint")
     # Quota fallback may have stored "ip:<addr>" as the identity — that is a
     # bucket key, not a person; only real fingerprints get creator credit.
+    retired = []
     if _creator_fp and not str(_creator_fp).startswith("ip:"):
         community_store.ensure_user(_creator_fp)
         community_store.set_creator(app_id, _creator_fp)
+        if recipe.get("visibility") == "public":
+            retired = dedupe_creator(history_store, community_store, APPS_DIR, _creator_fp)
+    public_recipe = _public_recipe(recipe)
+    if app_id in retired:
+        public_recipe["visibility"] = "private"
     return {
         "app_id": app_id,
         "url": f"/a/{app_id}",
-        "recipe": _public_recipe(recipe),
+        "recipe": public_recipe,
+        "retired_app_ids": retired,
         "edit_token": recipe.get("edit_token"),
         "ios": build_meta.get("ios", {}),
         "android": build_meta.get("android", {}),
@@ -842,6 +850,18 @@ async def _retention_loop() -> None:
 async def _startup_services():
     global retention_task
     await asyncio.to_thread(_purge_expired_generated_apps)
+    try:
+        summary = await asyncio.to_thread(
+            dedupe_public_market, history_store, community_store, APPS_DIR,
+        )
+        if summary.get("retired_apps") or summary.get("removed_ratings"):
+            log_event(
+                "market_deduped",
+                retired_apps=len(summary.get("retired_apps") or []),
+                removed_ratings=summary.get("removed_ratings") or 0,
+            )
+    except Exception as exc:
+        log_event("market_dedupe_failed", error=str(exc))
     await distill_queue.start()
     retention_task = asyncio.create_task(_retention_loop(), name="app-retention-sweeper")
 
@@ -1616,11 +1636,28 @@ def set_history_visibility(app_id: str, payload: VisibilityPayload, request: Req
         raise HTTPException(403, "Not the app owner")
     if visibility == "public" and not (stored.get("tags") or []):
         raise HTTPException(400, "Public apps need at least one tag")
+    creator_fp = community_store.creator_of(app_id)
+    if (
+        visibility == "public"
+        and creator_fp
+        and conflicts_with_newer(history_store, community_store, APPS_DIR, creator_fp, app_id)
+    ):
+        raise HTTPException(409, "duplicate_public_app")
     if not history_store.set_app_visibility(app_id, visibility, stored.get("tags")):
         raise HTTPException(500, "Update failed")
     stored["visibility"] = visibility
     recipe_path.write_text(json.dumps(stored, ensure_ascii=False))
-    return {"app_id": app_id, "visibility": visibility, "history": _history_payload(request)}
+    retired = []
+    if visibility == "public" and creator_fp:
+        retired = [item for item in dedupe_creator(
+            history_store, community_store, APPS_DIR, creator_fp,
+        ) if item != app_id]
+    return {
+        "app_id": app_id,
+        "visibility": visibility,
+        "retired_app_ids": retired,
+        "history": _history_payload(request),
+    }
 
 
 @app.post("/api/history/delete-bulk")

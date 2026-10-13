@@ -195,6 +195,11 @@ class CommunityStore:
             ).fetchall()
             return [r["app_id"] for r in rows]
 
+    def creator_fingerprints(self) -> List[str]:
+        with self._lock:
+            rows = self._conn.execute("SELECT DISTINCT fp FROM app_creators").fetchall()
+            return [r["fp"] for r in rows if r["fp"]]
+
     # ---------- comments & ratings ----------
 
     def add_comment(self, app_id: str, fp: str, body: str, rating: Optional[int]) -> dict:
@@ -207,11 +212,54 @@ class CommunityStore:
         self.ensure_user(fp)
         now = _utc_now()
         with self._lock:
+            # One rating per person per app. A later score replaces the
+            # earlier one instead of stacking another 5-star on the average.
+            if rating is not None:
+                rating = int(rating)
+                existing = self._conn.execute(
+                    """SELECT id FROM comments
+                       WHERE app_id = ? AND fp = ? AND rating IS NOT NULL
+                       ORDER BY id DESC""",
+                    (app_id, fp),
+                ).fetchall()
+                if existing:
+                    keep_id = existing[0]["id"]
+                    self._conn.execute(
+                        "UPDATE comments SET body = ?, rating = ?, created_at = ? WHERE id = ?",
+                        (body, rating, now, keep_id),
+                    )
+                    extras = [(row["id"],) for row in existing[1:]]
+                    if extras:
+                        self._conn.executemany("DELETE FROM comments WHERE id = ?", extras)
+                    return self.comment_by_id(keep_id, viewer_fp=fp)
             cur = self._conn.execute(
                 "INSERT INTO comments(app_id, fp, body, rating, created_at) VALUES (?, ?, ?, ?, ?)",
                 (app_id, fp, body, rating, now),
             )
             return self.comment_by_id(cur.lastrowid, viewer_fp=fp)
+
+    def collapse_duplicate_ratings(self) -> int:
+        """Delete older ratings so each person has one score per app.
+
+        Keeps the row with the latest ``created_at`` (then the highest id).
+        Comments that carry no rating are left alone.
+        """
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT id, app_id, fp, created_at FROM comments WHERE rating IS NOT NULL"
+            ).fetchall()
+            best = {}
+            for row in rows:
+                key = (row["app_id"], row["fp"])
+                rank = (row["created_at"] or "", int(row["id"]))
+                current = best.get(key)
+                if current is None or rank > current[0]:
+                    best[key] = (rank, row["id"])
+            keep = {item[1] for item in best.values()}
+            drop = [(row["id"],) for row in rows if row["id"] not in keep]
+            if drop:
+                self._conn.executemany("DELETE FROM comments WHERE id = ?", drop)
+            return len(drop)
 
     def _comment_row_to_dict(self, row, viewer_fp: Optional[str]) -> dict:
         return {

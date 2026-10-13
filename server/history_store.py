@@ -701,6 +701,36 @@ class HistoryStore:
             self._flush_visits_locked()
             return app_id in self._get_device_app_ids_locked(device_fingerprint)
 
+    def fetch_app_rows(self, app_ids: List[str]) -> List[dict]:
+        """Raw app rows for the duplicate check. Includes private apps."""
+        ids = [str(a) for a in app_ids if a]
+        if not ids:
+            return []
+        placeholders = ",".join("?" for _ in ids)
+        with self._lock:
+            self._flush_visits_locked()
+            rows = self._conn.execute(
+                f"SELECT * FROM apps WHERE app_id IN ({placeholders})",
+                ids,
+            ).fetchall()
+        out = []
+        for row in rows:
+            keys = row.keys()
+            try:
+                recipe = json.loads(row["recipe_json"] or "{}")
+            except Exception:
+                recipe = {}
+            out.append({
+                "app_id": row["app_id"],
+                "name": row["name"] or "",
+                "target_url": row["target_url"] or "",
+                "created_at": row["created_at"] or "",
+                "updated_at": row["updated_at"] or "",
+                "visibility": (row["visibility"] if "visibility" in keys else None) or "private",
+                "recipe": recipe if isinstance(recipe, dict) else {},
+            })
+        return out
+
     def get_app_visibility(self, app_id: str) -> Optional[dict]:
         with self._lock:
             self._flush_visits_locked()
