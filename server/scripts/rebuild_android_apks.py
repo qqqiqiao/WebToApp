@@ -9,6 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from server.engine.distiller import Distiller
+from server.engine.icon_quality import is_unusable_icon
 from server.engine.storage import r2_storage
 
 
@@ -37,9 +38,16 @@ def rebuild_one(distiller: Distiller, app_dir: Path, upload: bool) -> dict:
 
     icon_path = app_dir / "icon.png"
     icon_png = icon_path.read_bytes() if icon_path.exists() else None
+    if icon_png and is_unusable_icon(icon_png):
+        try:
+            icon_path.unlink()
+        except OSError:
+            pass
+        icon_png = None
     if not icon_png:
+        # The APK toolchain wants a real PNG, but a flat color is not an
+        # icon the market should keep. Pass it to the builder only.
         icon_png = distiller._make_placeholder_png(recipe.get("color") or "#7c3aed")
-        icon_path.write_bytes(icon_png)
 
     shell_url = recipe.get("url") or ""
     if not shell_url:

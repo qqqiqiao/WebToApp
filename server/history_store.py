@@ -221,6 +221,7 @@ class HistoryStore:
         safe_recipe.pop("_custom_icon_data_url", None)
         safe_recipe.pop("_about_text", None)
         safe_recipe.pop("_about_images", None)
+        safe_recipe.pop("_icon_rejected", None)
         safe_recipe.pop("edit_token", None)
         return {
             "app_id": recipe.get("id"),

@@ -32,6 +32,21 @@ INDEX_HTML = b"""<!DOCTYPE html>
 TINY_PNG = Distiller()._make_placeholder_png("#123456", 16)
 
 
+def _pattern_png():
+    from PIL import Image
+    image = Image.new("RGBA", (8, 8))
+    pixels = image.load()
+    for y in range(8):
+        for x in range(8):
+            pixels[x, y] = ((x * 32) % 256, (y * 28) % 256, (x * y * 3) % 256, 255)
+    buf = io.BytesIO()
+    image.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+PATTERN_PNG = _pattern_png()
+
+
 class ValidateAndExtractTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -265,7 +280,7 @@ class DistillerHtmlModeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             html_site.restore_site_files(root / "ab12cd34" / "site", [{"name": "index.html", "data": INDEX_HTML},
-                                                                      {"name": "icon.png", "data": TINY_PNG}])
+                                                                      {"name": "icon.png", "data": PATTERN_PNG}])
             with patch.object(distiller, "_generated_root", return_value=root):
                 recipe = {"id": "ab12cd34", "url": "https://x/", "color": "#123456", "source_type": "html"}
                 icon = distiller._fetch_icon(recipe)
@@ -274,10 +289,22 @@ class DistillerHtmlModeTests(unittest.TestCase):
         from PIL import Image as _Image
         self.assertEqual(
             _Image.open(_io.BytesIO(icon)).tobytes(),
-            _Image.open(_io.BytesIO(TINY_PNG)).tobytes(),
+            _Image.open(_io.BytesIO(PATTERN_PNG)).tobytes(),
         )
 
-    def test_fetch_icon_falls_back_to_placeholder(self):
+    def test_fetch_icon_skips_solid_local_icon(self):
+        distiller = Distiller()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            html_site.restore_site_files(
+                root / "ab12cd34" / "site",
+                [{"name": "index.html", "data": INDEX_HTML}, {"name": "icon.png", "data": TINY_PNG}],
+            )
+            with patch.object(distiller, "_generated_root", return_value=root):
+                recipe = {"id": "ab12cd34", "url": "https://x/", "color": "#123456", "source_type": "html"}
+                self.assertIsNone(distiller._fetch_icon(recipe))
+
+    def test_fetch_icon_has_no_solid_placeholder(self):
         distiller = Distiller()
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -285,7 +312,7 @@ class DistillerHtmlModeTests(unittest.TestCase):
             with patch.object(distiller, "_generated_root", return_value=root):
                 recipe = {"id": "ab12cd34", "url": "https://x/", "color": "#112233", "source_type": "html"}
                 icon = distiller._fetch_icon(recipe)
-        self.assertEqual(icon, distiller._make_placeholder_png("#112233"))
+        self.assertIsNone(icon)
 
     def test_download_page_marks_html_apps(self):
         distiller = Distiller()

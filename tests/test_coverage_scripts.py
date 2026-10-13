@@ -207,7 +207,7 @@ def test_rebuild_one_builds_placeholder_uploads_and_preserves_other_errors(tmp_p
 
     assert result == {"app_id": "fallback-id", "apk": True, "size": 2048, "cdn": True}
     assert distiller.placeholder_colors == ["#123456"]
-    assert (app / "icon.png").read_bytes() == b"placeholder-png"
+    assert not (app / "icon.png").exists()
     assert not (app / "downloads" / "android.zip").exists()
     saved = json.loads(recipe_path.read_text())
     assert saved["id"] == "fallback-id"
