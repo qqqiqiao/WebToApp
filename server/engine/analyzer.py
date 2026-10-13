@@ -402,7 +402,8 @@ class SiteAnalyzer:
             icon_png = icon_cache.get(cache_key)
             if icon_png is None:
                 candidates = self.icon_distiller._collect_icon_candidates(url)
-                icon_png = self.icon_distiller._choose_best_icon(candidates)
+                picked = self.icon_distiller._choose_best_icon(candidates)
+                icon_png = picked[0] if isinstance(picked, tuple) else picked
                 if icon_png:
                     icon_cache.set(cache_key, icon_png)
                 else:

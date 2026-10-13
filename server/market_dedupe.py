@@ -80,6 +80,11 @@ def _unpublish(history_store, apps_dir: Path, app_ids) -> list:
     return done
 
 
+def unpublish_apps(history_store, apps_dir: Path, app_ids) -> list:
+    """Take apps off the market without deleting their download pages."""
+    return _unpublish(history_store, apps_dir, app_ids)
+
+
 def dedupe_creator(history_store, community_store, apps_dir: Path, fp: str) -> list:
     """Unpublish this creator's older public duplicates. Returns those app ids."""
     if not fp or str(fp).startswith("ip:"):

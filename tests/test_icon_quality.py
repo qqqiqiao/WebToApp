@@ -101,7 +101,7 @@ class SolidIconTests(unittest.TestCase):
                 [(255, 0, 0, 255), (0, 255, 0, 255)],
                 [(0, 0, 255, 255), (255, 255, 0, 255)],
             ]))
-            self.assertEqual(strip_solid_icons(root), 1)
+            self.assertEqual(strip_solid_icons(root), ["flatapp1"])
             self.assertFalse((flat / "icon.png").exists())
             self.assertFalse((flat / "page.html").exists())
             self.assertTrue((real / "icon.png").exists())
