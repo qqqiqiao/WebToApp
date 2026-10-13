@@ -14,9 +14,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@400;500;600;700;900&family=Spectral:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20261013-announce1">
-  <script src="js/i18n.js?v=20261013-announce1"></script>
-  <script src="js/i18n.strings.js?v=20261013-announce1"></script>
+  <link rel="stylesheet" href="css/style.css?v=20261013-noticebtn1">
+  <script src="js/i18n.js?v=20261013-noticebtn1"></script>
+  <script src="js/i18n.strings.js?v=20261013-noticebtn1"></script>
 </head>
 <body>
   <header id="nav">
@@ -32,6 +32,20 @@
       <div class="lang-switcher">
         <label id="lang-label" class="sr-only" for="lang-select" data-i18n="nav.langLabel">Language</label>
         <select id="lang-select" aria-labelledby="lang-label"></select>
+      </div>
+      <div class="nav-notices">
+        <button id="notices-btn" class="nav-notices-btn" type="button"
+          aria-haspopup="dialog" aria-expanded="false" aria-controls="notices-panel"
+          aria-label="Notices" title="Notices">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </button>
+        <div id="notices-panel" class="nav-notices-panel hidden" role="dialog" aria-labelledby="notices-title" hidden>
+          <div class="nav-notices-head">
+            <p id="notices-title" class="nav-notices-title"></p>
+            <button id="notices-close" class="nav-notices-close" type="button" aria-label="Close">×</button>
+          </div>
+          <div id="notices-scroll" class="nav-notices-scroll"></div>
+        </div>
       </div>
       <a class="gh-link" href="https://github.com/shiahonb777/WebToApp" target="_blank" rel="noopener noreferrer"
          data-i18n-aria-label="nav.github" aria-label="View source on GitHub" title="GitHub">
@@ -71,8 +85,6 @@
       </div>
     </div>
   </header>
-
-  <section id="announcements" class="announce" hidden></section>
 
   <main>
     <!-- ===== HERO ===== -->
@@ -572,8 +584,8 @@
     </div>
   </div>
 
-  <script src="js/announcements.js?v=20261013-announce1"></script>
-  <script src="js/mdmini.js?v=20261013-announce1"></script>
-  <script src="js/app.v5.js?v=20261013-announce1"></script>
+  <script src="js/announcements.js?v=20261013-noticebtn1"></script>
+  <script src="js/mdmini.js?v=20261013-noticebtn1"></script>
+  <script src="js/app.v5.js?v=20261013-noticebtn1"></script>
 </body>
 </html>

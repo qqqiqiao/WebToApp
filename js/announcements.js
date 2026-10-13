@@ -1,6 +1,7 @@
 /* WebToApp notices.
-   This is the only place a notice is written. The page draws them as a
-   timeline under the header. It does not open a dialog.
+   This is the only place a notice is written. The page shows one small
+   button in the top bar. A click opens a short panel; the text scrolls
+   inside that panel.
 
    To add one: put a new object at the top of NOTICES (newest first).
    publishedAt is UTC, ISO-8601. Give title and paragraphs for every
@@ -118,46 +119,90 @@
   }
 
   function render() {
-    var root = document.getElementById('announcements');
-    if (!root) return;
+    var wrap = document.getElementById('nav-notices') || document.querySelector('.nav-notices');
+    var btn = document.getElementById('notices-btn');
+    var title = document.getElementById('notices-title');
+    var scroll = document.getElementById('notices-scroll');
+    if (!wrap || !btn || !title || !scroll) return;
     var lang = (window.I18n && LANGS.indexOf(window.I18n.current) !== -1) ? window.I18n.current : 'en';
     var chrome = CHROME[lang] || CHROME.en;
     if (!NOTICES.length) {
-      root.hidden = true;
-      root.innerHTML = '';
+      wrap.hidden = true;
       return;
     }
-    var items = NOTICES.map(function (notice, index) {
-      var title = pick(notice.title, lang) || notice.id;
+    wrap.hidden = false;
+    btn.setAttribute('aria-label', chrome.heading);
+    btn.title = chrome.heading;
+    title.textContent = chrome.heading;
+    var closeBtn = document.getElementById('notices-close');
+    if (closeBtn) closeBtn.setAttribute('aria-label', lang === 'zh' ? '关闭' : 'Close');
+    scroll.innerHTML = '<ol class="nav-notices-list">' + NOTICES.map(function (notice) {
+      var heading = pick(notice.title, lang) || notice.id;
       var paragraphs = pick(notice.paragraphs, lang) || [];
       var body = paragraphs.map(function (paragraph) {
         return '<p>' + esc(paragraph) + '</p>';
       }).join('');
-      var open = index === 0 ? ' open' : '';
       return '' +
-        '<li class="announce-item">' +
-          '<time class="announce-date" datetime="' + esc(notice.publishedAt) + '">' + esc(dateLabel(notice.publishedAt)) + '</time>' +
-          '<span class="announce-rail" aria-hidden="true"><span class="announce-dot"></span></span>' +
-          '<details class="announce-entry"' + open + '>' +
-            '<summary class="announce-title">' + esc(title) + '</summary>' +
-            '<div class="announce-body">' + body + '</div>' +
-          '</details>' +
+        '<li class="nav-notices-item">' +
+          '<time class="nav-notices-date" datetime="' + esc(notice.publishedAt) + '">' + esc(dateLabel(notice.publishedAt)) + '</time>' +
+          '<h3>' + esc(heading) + '</h3>' +
+          body +
         '</li>';
-    }).join('');
-    root.hidden = false;
-    root.innerHTML =
-      '<div class="announce-board">' +
-        '<p class="announce-kicker">' + esc(chrome.kicker) + '</p>' +
-        '<h2 id="announce-title" class="announce-heading">' + esc(chrome.heading) + '</h2>' +
-        '<ol class="announce-timeline">' + items + '</ol>' +
-      '</div>';
+    }).join('') + '</ol>';
+  }
+
+  function bind() {
+    var btn = document.getElementById('notices-btn');
+    var panel = document.getElementById('notices-panel');
+    var closeBtn = document.getElementById('notices-close');
+    if (!btn || !panel || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+
+    function isOpen() {
+      return !panel.classList.contains('hidden');
+    }
+
+    function setOpen(open) {
+      panel.classList.toggle('hidden', !open);
+      panel.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    btn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      setOpen(!isOpen());
+    });
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function (event) {
+        event.stopPropagation();
+        setOpen(false);
+        btn.focus();
+      });
+    }
+    panel.addEventListener('click', function (event) {
+      event.stopPropagation();
+    });
+    document.addEventListener('click', function () {
+      if (isOpen()) setOpen(false);
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && isOpen()) {
+        setOpen(false);
+        btn.focus();
+      }
+    });
+  }
+
+  function start() {
+    bind();
+    render();
   }
 
   window.WTA_NOTICES = NOTICES;
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', render);
+    document.addEventListener('DOMContentLoaded', start);
   } else {
-    render();
+    start();
   }
   window.addEventListener('i18n:changed', render);
 })();
