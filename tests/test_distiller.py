@@ -380,6 +380,27 @@ class DownloadPageHardeningTests(unittest.TestCase):
         self.assertIn("sha256-", script_src)
         # WTA_APP_ID must be assigned before community.js executes.
         self.assertLess(page.index("window.WTA_APP_ID"), page.index("/js/community.js"))
+        self.assertIn("ca-pub-7023716352718601", page)
+        self.assertIn("pagead2.googlesyndication.com", script_src)
+        self.assertIn("googleads.g.doubleclick.net", page)
+
+    def test_ads_txt_names_the_publisher(self):
+        from pathlib import Path
+        text = Path("ads.txt").read_text(encoding="utf-8")
+        self.assertIn("google.com, pub-7023716352718601, DIRECT, f08c47fec0942fa0", text)
+
+    def test_pwa_shell_does_not_load_ads(self):
+        import tempfile
+        from pathlib import Path
+
+        recipe = {
+            "id": "abcd1234", "name": "App", "url": "https://example.com",
+            "color": "#7c3aed", "display": "standalone", "orientation": "any",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            Distiller()._write_pwa_files(Path(tmp), recipe, "https://example.com")
+            pwa = (Path(tmp) / "pwa.html").read_text()
+        self.assertNotIn("googlesyndication.com", pwa)
 
 
 class ArtifactSanitizationTests(unittest.TestCase):

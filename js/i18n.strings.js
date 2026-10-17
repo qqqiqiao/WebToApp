@@ -28,6 +28,7 @@
 
     'nav.langLabel': 'Language',
     'nav.github': 'View source on GitHub',
+    'footer.privacy': 'Privacy',
     'nav.qq': 'Community',
     'nav.qqShort': 'Community',
     'nav.qqLead': 'Join the group chat “WebToApp 网页版”.',
@@ -301,6 +302,7 @@
 
     'nav.langLabel': '语言',
     'nav.github': '在 GitHub 上查看源码',
+    'footer.privacy': '隐私说明',
     'nav.qq': '社区',
     'nav.qqShort': '社区',
     'nav.qqLead': '点击链接加入群聊【WebToApp 网页版】',
@@ -574,6 +576,7 @@
 
     'nav.langLabel': '言語',
     'nav.github': 'GitHub でソースを見る',
+    'footer.privacy': 'プライバシー',
     'nav.qq': 'コミュニティ',
     'nav.qqShort': 'コミュニティ',
     'nav.qqLead': 'グループチャット「WebToApp 网页版」に参加',
@@ -823,6 +826,7 @@
 
     'nav.langLabel': 'اللغة',
     'nav.github': 'عرض المصدر على GitHub',
+    'footer.privacy': 'الخصوصية',
     'nav.qq': 'المجتمع',
     'nav.qqShort': 'المجتمع',
     'nav.qqLead': 'انضم إلى دردشة المجموعة «WebToApp 网页版»',
@@ -1072,6 +1076,7 @@
 
     'nav.langLabel': 'Язык',
     'nav.github': 'Открыть исходный код на GitHub',
+    'footer.privacy': 'Конфиденциальность',
     'nav.qq': 'Сообщество',
     'nav.qqShort': 'Сообщество',
     'nav.qqLead': 'Вступить в групповой чат «WebToApp 网页版»',
@@ -1321,6 +1326,7 @@
 
     'nav.langLabel': 'Idioma',
     'nav.github': 'Ver el código en GitHub',
+    'footer.privacy': 'Privacidad',
     'nav.qq': 'Comunidad',
     'nav.qqShort': 'Comunidad',
     'nav.qqLead': 'Únete al chat del grupo «WebToApp 网页版»',
@@ -1570,6 +1576,7 @@
 
     'nav.langLabel': 'Idioma',
     'nav.github': 'Ver o código no GitHub',
+    'footer.privacy': 'Privacidade',
     'nav.qq': 'Comunidade',
     'nav.qqShort': 'Comunidade',
     'nav.qqLead': 'Entre no chat do grupo «WebToApp 网页版»',
@@ -1819,6 +1826,7 @@
 
     'nav.langLabel': 'Langue',
     'nav.github': 'Voir le code sur GitHub',
+    'footer.privacy': 'Confidentialité',
     'nav.qq': 'Communauté',
     'nav.qqShort': 'Communauté',
     'nav.qqLead': 'Rejoindre le groupe « WebToApp 网页版 »',
@@ -2068,6 +2076,7 @@
 
     'nav.langLabel': 'Sprache',
     'nav.github': 'Quellcode auf GitHub ansehen',
+    'footer.privacy': 'Datenschutz',
     'nav.qq': 'Community',
     'nav.qqShort': 'Community',
     'nav.qqLead': 'Dem Gruppenchat „WebToApp 网页版“ beitreten',
