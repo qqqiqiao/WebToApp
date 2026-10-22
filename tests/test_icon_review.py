@@ -4,6 +4,7 @@ import io
 import json
 import tempfile
 import unittest
+import unittest.mock
 import zipfile
 from pathlib import Path
 
@@ -74,7 +75,7 @@ class IconReviewTests(unittest.TestCase):
         downloads.mkdir()
         with zipfile.ZipFile(downloads / "windows.zip", "w") as bundle:
             bundle.writestr("Flat/icon.png", _solid_png())
-        summary = run_icon_review_pass(self.history, self.apps)
+        summary = run_icon_review_pass(self.history, self.apps, now="2026-10-19T00:00:00Z")
         self.assertEqual(summary["flagged"], ["oldflat1"])
         self.assertEqual(summary["unpublished"], [])
         self.assertEqual(
@@ -88,7 +89,7 @@ class IconReviewTests(unittest.TestCase):
         downloads.mkdir()
         with zipfile.ZipFile(downloads / "windows.zip", "w") as bundle:
             bundle.writestr("Flat/icon.png", _solid_png())
-        run_icon_review_pass(self.history, self.apps)
+        run_icon_review_pass(self.history, self.apps, now="2026-10-19T00:00:00Z")
         unpublished = enforce_icon_review_deadlines(
             self.history, self.apps, now="2026-10-21T00:00:00Z",
         )
@@ -104,7 +105,7 @@ class IconReviewTests(unittest.TestCase):
         downloads.mkdir()
         with zipfile.ZipFile(downloads / "windows.zip", "w") as bundle:
             bundle.writestr("Flat/icon.png", _solid_png())
-        run_icon_review_pass(self.history, self.apps)
+        run_icon_review_pass(self.history, self.apps, now="2026-10-19T00:00:00Z")
         (app_dir / "icon.png").write_bytes(_real_png())
         self.assertEqual(
             enforce_icon_review_deadlines(self.history, self.apps, now="2026-10-19T00:00:00Z"),
