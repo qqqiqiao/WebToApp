@@ -146,13 +146,13 @@ def enforce_icon_review_deadlines(history_store, apps_dir: Path, now: str = "") 
     return unpublish_apps(history_store, apps_dir, late)
 
 
-def run_icon_review_pass(history_store, apps_dir: Path) -> dict:
+def run_icon_review_pass(history_store, apps_dir: Path, now: str = "") -> dict:
     stripped = strip_solid_icons(apps_dir)
     flagged = []
     for app_id in list(stripped) + find_packaged_solid_apps(apps_dir):
         if _flag(history_store, app_id):
             flagged.append(app_id)
-    unpublished = enforce_icon_review_deadlines(history_store, apps_dir)
+    unpublished = enforce_icon_review_deadlines(history_store, apps_dir, now=now)
     return {
         "stripped": stripped,
         "flagged": flagged,
